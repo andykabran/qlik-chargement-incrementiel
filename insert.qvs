@@ -1,4 +1,4 @@
-//Chargement des données QVD
+//Chargement des données QVD.
 QVD_Student:
 LOAD id, 
 	number, 
@@ -8,16 +8,16 @@ LOAD id,
 	updated_at
 from [lib://DATA/student.qvd](qvd);
 
-//Recherche la dernière date de modification
-last_Updated_Date:
+//Recherche la dernière date de modification.
+Last_Updated:
 Load Max(updated_at) as MaxDate
 Resident QVD_Student; 
 
 //https://help.qlik.com/fr-FR/sense/May2021/Subsystems/Hub/Content/Sense_Hub/Scripting/InterRecordFunctions/Peek.htm
-Let Last_Updated_Date = Peek('MaxDate',0,'last_Updated_Date');
+Let MaxDate = Peek('MaxDate',0,Last_Updated);
 Drop Table QVD_Student;
 
-//Chargement des données incrémentielles
+//Chargement des données incrémentielles.
 Incremantal:
 Load id, 
 	number, 
@@ -27,19 +27,19 @@ Load id,
 	updated_at;
 SELECT *
 FROM `ic_db`.student
-WHERE updated_at > '$(Last_Updated_Date)';
+WHERE updated_at > '$(MaxDate)';
 
-//Concaténation avec les données QVD
-Concatenate
-Load id, 
-	number, 
-	first_name, 
-	last_name, 
-	created_at, 
-	updated_at
-from [lib://DATA/student.qvd](qvd);
+//Concaténation avec les données QVD.
+// Concatenate
+// Load id, 
+// 	number, 
+// 	first_name, 
+// 	last_name, 
+// 	created_at, 
+// 	updated_at
+// from [lib://DATA/student.qvd](qvd);
 
-//Remplace l'ancien QVD
+//Remplace l'ancien QVD.
 Store Incremantal into [lib://DATA/student.qvd](qvd); 
 
 Drop Tables Incremantal;
