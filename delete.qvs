@@ -1,0 +1,62 @@
+//Chargement des données QVD.
+QVD_Student:
+LOAD id, 
+	number, 
+	first_name, 
+	last_name, 
+	created_at, 
+	updated_at
+from [lib://DATA/student.qvd](qvd);
+
+//Recherche la dernière date de modification.
+last_Updated_Date:
+Load Max(updated_at) as MaxDate
+Resident QVD_Student; 
+
+//https://help.qlik.com/fr-FR/sense/May2021/Subsystems/Hub/Content/Sense_Hub/Scripting/InterRecordFunctions/Peek.htm
+Let Last_Updated_Date = Peek('MaxDate',0,'last_Updated_Date');
+Drop Table QVD_Student;
+
+//Chargement des données incrémentielles.
+Incremantal:
+Load id, 
+	number, 
+	first_name, 
+	last_name, 
+	created_at, 
+	updated_at;
+SELECT *
+FROM `ic_db`.student
+WHERE updated_at > '$(Last_Updated_Date)';
+
+//Concaténation avec les données QVD.
+Concatenate
+Load id, 
+	number, 
+	first_name, 
+	last_name, 
+	created_at, 
+	updated_at
+from [lib://DATA/student.qvd](qvd) Where not Exists(id);
+
+//La jointure interne ne conservera que les enregistrements communs et supprimera donc les enregistrements indésirables.
+Inner Join
+Load id;
+SELECT *
+FROM `ic_db`.student;
+
+//Remplace l'ancien QVD.
+Store Incremantal into [lib://DATA/student.qvd](qvd); 
+
+Drop Tables Incremantal;
+
+Student:
+LOAD id, 
+	number, 
+	first_name, 
+	last_name, 
+	created_at, 
+	updated_at
+from [lib://DATA/student.qvd](qvd);
+
+exit script;
